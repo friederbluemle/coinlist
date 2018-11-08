@@ -1,4 +1,6 @@
-package org.fbluemle.testcoinlist;
+package org.fbluemle.testcoinlist.ui;
+
+import org.fbluemle.testcoinlist.R;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
