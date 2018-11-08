@@ -1,5 +1,6 @@
 package org.fbluemle.testcoinlist.ui;
 
+import org.fbluemle.testcoinlist.DataSource;
 import org.fbluemle.testcoinlist.R;
 import org.fbluemle.testcoinlist.data.TickerRow;
 
@@ -39,22 +40,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void refreshTickerItems() {
         mSwipeRefreshLayout.setRefreshing(true);
-        TickerRow[] items = getTickerItems();
+        TickerRow[] items = DataSource.getTickerItems();
         mTickerAdapter.setItems(Arrays.asList(items));
         mSwipeRefreshLayout.setRefreshing(false);
-    }
-
-    private TickerRow[] getTickerItems() {
-        return new TickerRow[] {
-                new TickerRow(1, "Bitcoin", getRandomPrice()),
-                new TickerRow(2, "SP Coin", getRandomPrice()),
-                new TickerRow(3, "Infinity", getRandomPrice()),
-                new TickerRow(4, "Jarvis", getRandomPrice()),
-                new TickerRow(5, "Bolt", getRandomPrice()),
-        };
-    }
-
-    private float getRandomPrice() {
-        return (float) (Math.random() * 1000 + 1000);
     }
 }
