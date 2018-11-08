@@ -2,6 +2,9 @@ package org.fbluemle.testcoinlist.ui;
 
 import org.fbluemle.testcoinlist.DataSource;
 import org.fbluemle.testcoinlist.R;
+import org.fbluemle.testcoinlist.api.TickerItem;
+import org.fbluemle.testcoinlist.api.TickerQuote;
+import org.fbluemle.testcoinlist.api.TickerResponse;
 import org.fbluemle.testcoinlist.data.TickerRow;
 
 import android.os.Bundle;
@@ -11,8 +14,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -47,11 +54,9 @@ public class MainActivity extends AppCompatActivity {
     private void refreshTickerItems() {
         Log.d("MainActivity", "Refreshing ...");
 
-        mSwipeRefreshLayout.setRefreshing(true);
-        TickerRow[] items = DataSource.getTickerItems();
-        mTickerAdapter.setItems(Arrays.asList(items));
-        mSwipeRefreshLayout.setRefreshing(false);
+        final Gson gson = new Gson();
 
+        mSwipeRefreshLayout.setRefreshing(true);
         DataSource.callTicker().enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -59,9 +64,28 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                Log.d("MainActivity", "From API: " + response.body().string());
+            public void onResponse(Call call, Response response) {
+                TickerResponse tickerResponse =
+                        gson.fromJson(response.body().charStream(), TickerResponse.class);
+                final List<TickerRow> tickerRows = new ArrayList<>(tickerResponse.data.size());
+                for (Map.Entry<String, TickerItem> item : tickerResponse.data.entrySet()) {
+                    tickerRows.add(convert(item.getValue()));
+                }
+                Log.d("MainActivity", "Received ticker rows: " + tickerRows.size());
+                runOnUiThread(() -> {
+                    mTickerAdapter.setItems(tickerRows);
+                    mSwipeRefreshLayout.setRefreshing(false);
+                });
             }
         });
+    }
+
+    private TickerRow convert(TickerItem item) {
+        TickerQuote usdQuote = item.quotes != null ? item.quotes.get("USD") : null;
+        TickerRow tickerRow = new TickerRow();
+        tickerRow.rank = item.rank;
+        tickerRow.name = item.name;
+        tickerRow.price = usdQuote != null ? usdQuote.price : 0;
+        return tickerRow;
     }
 }
